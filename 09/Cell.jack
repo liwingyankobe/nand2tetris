@@ -1,0 +1,65 @@
+class Cell {
+
+	field int r, c, size;
+	field boolean live, select;
+	
+	constructor Cell new(int cr, int cc, int csize) {
+		let r = cr;
+		let c = cc;
+		let size = csize;
+		let live = false;
+		let select = false;
+		do draw();
+		return this;
+	}
+	
+	method void dispose() {
+		do Memory.deAlloc(this);
+		return;
+	}
+	
+	/** Draw the current state of the cell */
+	method void draw() {
+		do Screen.setColor(live);
+		do Screen.drawRectangle(c, r, c + size - 1, r + size - 1);
+		do drawCursor();
+		return;
+	}
+	
+	/** Draw the cursor */
+	method void drawCursor() {
+		var int half;
+		if (select) { do Screen.setColor(~live); }
+		else { do Screen.setColor(live); }
+		let half = size / 2;
+		do Screen.drawRectangle(c + half - 1, r + half - 1, c + half, r + half);
+		return;
+	}
+	
+	/** Return the state as 0/1 */
+	method int getLive() {
+		if (live) { return 1; }
+		return 0;
+	}
+	
+	/** Set the state */
+	method void setLive(boolean val) {
+		let live = val;
+		do draw();
+		return;
+	}
+	
+	/** Change the state */
+	method void toggleLive() {
+		do setLive(~live);
+		return;
+	}
+	
+	/** Move in/out the cursor */
+	method void setSelect(boolean val) {
+		let select = val;
+		do drawCursor();
+		return;
+	}
+	
+}

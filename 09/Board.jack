@@ -1,0 +1,187 @@
+class Board {
+	
+	field Array cells, state;
+	field int row, column, size, sr, sc, top, left;
+	
+	constructor Board new(int r, int c, int csize) {
+		var int i, j;
+		var Array arr, arr2;
+		var Cell cell;
+		let row = r;
+		let column = c;
+		let size = csize + 2;
+		let sr = r / 2;
+		let sc = c / 2;
+		let cells = Array.new(row);
+		let state = Array.new(row + 2); // store state of board with 0/1
+		let top = -size * row / 2 + 132;
+		let left = -size * column / 2 + 255;
+		let i = 0;
+		// set boundary of state to be 0
+		while (i < (row + 2)) {
+			let state[i] = Array.new(column + 2);
+			let arr = state[i];
+			let j = 0;
+			while (j < (column + 2)) {
+				let arr[j] = 0;
+				let j = j + 1;
+			}
+			let i = i + row + 1;
+		}
+		// initialize cells and interior of state
+		let i = 0;
+		while (i < row) {
+			let cells[i] = Array.new(column);
+			let state[i + 1] = Array.new(column + 2);
+			let arr = cells[i];
+			let arr2 = state[i + 1];
+			let arr2[0] = 0;
+			let arr2[column + 1] = 0;
+			let j = 0;
+			while (j < column) {
+				let arr[j] = Cell.new(i * size + top + 2, j * size + left + 2, csize);
+				let arr2[j + 1] = 0;
+				let j = j + 1;
+			}
+			let i = i + 1;
+		}
+		let arr = cells[sr];
+		let cell = arr[sc];
+		do cell.setSelect(true);
+		do drawFrame();
+		return this;
+	}
+	
+	method void dispose() {
+		var int i, j;
+		var Array arr;
+		var Cell cell;
+		let i = 0;
+		while (i < row) {
+			let arr = cells[i];
+			let j = 0;
+			while (j < column) {
+				let cell = arr[j];
+				do cell.dispose();
+				let j = j + 1;
+			}
+			let i = i + 1;
+		}
+		do Memory.deAlloc(this);
+		return;
+	}
+	
+	/** Draw the square grid */
+	method void drawFrame() {
+		var int i, bottom, right;
+		let bottom = row * size + top + 1;
+		let right = column * size + left + 1;
+		let i = 0;
+		do Screen.setColor(true);
+		while (i < (row + 1)) {
+			do Screen.drawRectangle(left, i * size + top, right, i * size + top + 1);
+			let i = i + 1;
+		}
+		let i = 0;
+		while (i < (column + 1)) {
+			do Screen.drawRectangle(i * size + left, top, i * size + left + 1, bottom);
+			let i = i + 1;
+		}
+		return;
+	}
+	
+	/** Reset the board to be empty */
+	method void reset() {
+		var int i, j;
+		var Array arr, arr2;
+		var Cell cell;
+		let i = 0;
+		while (i < row) {
+			let j = 0;
+			let arr = cells[i];
+			let arr2 = state[i + 1];
+			while (j < column) {
+				let cell = arr[j];
+				do cell.setLive(false);
+				let arr2[j + 1] = 0;
+				let j = j + 1;
+			}
+			let i = i + 1;
+		}
+		return;
+	}
+	
+	/** Change the state (live/dead) of current cell */
+	method void toggle() {
+		var Array arr;
+		var Cell cell;
+		let arr = cells[sr];
+		let cell = arr[sc];
+		do cell.toggleLive();
+		let arr = state[sr + 1];
+		let arr[sc + 1] = 1 - arr[sc + 1];
+		return;
+	}
+	
+	/** Move the cursor */
+	method void move(int dr, int dc) {
+		var Array arr;
+		var Cell cell;
+		var int nr, nc;
+		let nr = sr + dr;
+		let nc = sc + dc;
+		if ((nr < 0) | (nc < 0) | (nr = row) | (nc = column)) { return; }
+		let arr = cells[sr];
+		let cell = arr[sc];
+		do cell.setSelect(false);
+		let arr = cells[nr];
+		let cell = arr[nc];
+		do cell.setSelect(true);
+		let sr = nr;
+		let sc = nc;
+		return;
+	}
+	
+	/** Evolve the grid by one step */
+	method void evolve() {
+		var Array arr, arr2;
+		var Cell cell;
+		var int i, j, count;
+		let i = 0;
+		while (i < row) {
+			let j = 0;
+			let arr2 = cells[i];
+			while (j < column) {
+				// count number of neighbor live cells
+				let cell = arr2[j];
+				let arr = state[i];
+				let count = arr[j] + arr[j + 1] + arr[j + 2];
+				let arr = state[i + 1];
+				let count = count + arr[j] + arr[j + 2];
+				let arr = state[i + 2];
+				let count = count + arr[j] + arr[j + 1] + arr[j + 2];
+				let arr = state[i + 1];
+				if ((arr[j + 1] = 1) & (count < 2)) { do cell.setLive(false); } // underpopulation
+				if ((arr[j + 1] = 1) & (count > 3)) { do cell.setLive(false); } // overpopulation
+				if ((arr[j + 1] = 0) & (count = 3)) { do cell.setLive(true); } // reproduction
+				let j = j + 1;
+			}
+			let i = i + 1;
+		}
+		let i = 0;
+		// update state
+		while (i < row) {
+			let arr = state[i + 1];
+			let arr2 = cells[i];
+			let j = 0;
+			while (j < column) {
+				let cell = arr2[j];
+				let arr[j + 1] = cell.getLive();
+				let j = j + 1;
+			}
+			let i = i + 1;
+		}
+		return;
+	}
+	
+}

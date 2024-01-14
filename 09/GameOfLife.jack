@@ -1,0 +1,55 @@
+class GameOfLife {
+	
+	field Board board;
+	
+	constructor GameOfLife new() {
+		do Screen.clearScreen();
+		let board = Board.new(11, 27, 16); // 11 * 27 board, squares with size 16 * 16
+		do Output.moveCursor(1, 21);
+		do Output.printString("Game of Life Simulator");
+		do Output.moveCursor(22, 0);
+		do Output.printString("Arrows - Move, T - Toggle, E - Evolve, P - Play/Pause, R - Reset");
+		return this;
+	}
+	
+	method void dispose() {
+		do board.dispose();
+		do Memory.deAlloc(this);
+		return;
+	}
+	
+	/** Main process */
+	method void run() {
+		var int key;
+		let key = 0;
+		while (true) {
+			while (key = 0) {
+				let key = Keyboard.keyPressed();
+			}
+			if (key = 69) { do board.evolve(); } // E
+			if (key = 80) { do play(); } // P
+			if (key = 82) { do board.reset(); } // R
+			if (key = 84) { do board.toggle(); } // T
+			if (key = 130) { do board.move(0, -1); } // Left
+			if (key = 131) { do board.move(-1, 0); } // Up
+			if (key = 132) { do board.move(0, 1); } // Right
+			if (key = 133) { do board.move(1, 0); } // Down
+			while (key > 0) {
+				let key = Keyboard.keyPressed();
+			}
+		}
+		return;
+	}
+	
+	/** Play the evolution continuously */
+	method void play() {
+		var int key;
+		let key = 0;
+		while (~(key = 80)) { // P
+			do board.evolve();
+			do Sys.wait(500);
+			let key = Keyboard.keyPressed();
+		}
+		return;
+	}
+}

@@ -1,0 +1,121 @@
+// This file is part of www.nand2tetris.org
+// and the book "The Elements of Computing Systems"
+// by Nisan and Schocken, MIT Press.
+// File name: projects/12/Memory.jack
+
+/**
+ * This library provides two services: direct access to the computer's main
+ * memory (RAM), and allocation and recycling of memory blocks. The Hack RAM
+ * consists of 32,768 words, each holding a 16-bit binary number.
+ */ 
+class Memory {
+
+	/** Linked list of free blocks. Each block contains size header and the next pointer. */
+	static int head;
+
+    /** Initializes the class. */
+    function void init() {
+		let head = 2048;
+		do Memory.poke(head, 14336);
+		do Memory.poke(head + 1, -1);
+		return;
+    }
+
+    /** Returns the RAM value at the given address. */
+    function int peek(int address) {
+		var Array memory;
+		let memory = 0;
+		return memory[address];
+    }
+
+    /** Sets the RAM value at the given address to the given value. */
+    function void poke(int address, int value) {
+		var Array memory;
+		let memory = 0;
+		let memory[address] = value;
+		return;
+    }
+
+    /** Finds an available RAM block of the given size and returns
+     *  a reference to its base address.
+	 *
+	 *  The first fit in free list is used. The allocated block contains size header. */
+    function int alloc(int size) {
+		var int node, next, seg;
+		if (~(size > 0)) {
+			do Sys.error(0);
+			return -1;
+		}
+		let node = head;
+		let seg = Memory.peek(head);
+		if (seg > size) {
+			if (seg < (size + 4)) {
+				let head = Memory.peek(head + 1);
+				return node + 1;
+			} else {
+				let head = node + size + 1;
+				do Memory.poke(head, seg - size - 1);
+				do Memory.poke(head + 1, Memory.peek(node + 1));
+				do Memory.poke(node, size + 1);
+				return node + 1;
+			}
+		}
+		let next = Memory.peek(head + 1);
+		while (next > 0) {
+			let seg = Memory.peek(next);
+			if (seg > size) {
+				if (seg < (size + 4)) {
+					do Memory.poke(node + 1, Memory.peek(next + 1));
+					do Memory.poke(next, seg);
+					return next + 1;
+				} else {
+					do Memory.poke(node + 1, next + size + 1);
+					do Memory.poke(next + size + 1, seg - size - 1);
+					do Memory.poke(next + size + 2, Memory.peek(next + 1));
+					do Memory.poke(next, size + 1);
+					return next + 1;
+				}
+			}
+			let node = next;
+			let next = Memory.peek(node + 1);
+		}
+		do Sys.error(1);
+		return -1;
+    }
+
+    /** De-allocates the given object (cast as an array) by making
+     *  it available for future allocations.
+	 *  Coalesce algorithm is used for defragmentation. */
+    function void deAlloc(Array o) {
+		var int node, next, seg;
+		let node = head;
+		if (o < head) {
+			let head = o - 1;
+			let seg = Memory.peek(head);
+			if (head + seg = node) {
+				do Memory.poke(head, seg + Memory.peek(node));
+				do Memory.poke(o, Memory.peek(node + 1));
+			} else { do Memory.poke(o, node); }
+			return;
+		}
+		let next = Memory.peek(head + 1);
+		while ((next > 0) & (o > next)) {
+			let node = next;
+			let next = Memory.peek(node + 1);
+		}
+		let seg = Memory.peek(node);
+		if (node + seg + 1 = o) {
+			do Memory.poke(node, seg + Memory.peek(o - 1));
+		} else {
+			do Memory.poke(node + 1, o - 1);
+			do Memory.poke(o, next);
+			let node = o - 1;
+		}
+		let seg = Memory.peek(node);
+		if (node + seg = next) {
+			do Memory.poke(node, seg + Memory.peek(next));
+			do Memory.poke(node + 1, Memory.peek(next + 1));
+		}
+		return;
+    }    
+}

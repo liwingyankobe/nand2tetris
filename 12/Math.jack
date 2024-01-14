@@ -1,0 +1,118 @@
+// This file is part of www.nand2tetris.org
+// and the book "The Elements of Computing Systems"
+// by Nisan and Schocken, MIT Press.
+// File name: projects/12/Math.jack
+
+/** A library of commonly used mathematical functions.
+ *  All functions runs in O(n), where n is the number of bits used
+ *  for representing a two's complement integer value (16 in the Hack computer). 
+ *  Note: Jack compilers implement multiplication and division
+ *  using calls to OS functions in this class.
+ */
+class Math {
+    static int n;             // Number of bits used for representing a two's complement integer
+    static Array powersOfTwo; // Stores 2^0, 2^1, 2^2,..., 2^(n-1)
+
+    // Initializes the Math library.
+    function void init() {
+		var int i;
+		let n = 16;
+		let powersOfTwo = Array.new(n);
+		let powersOfTwo[0] = 1;
+		let i = 1;
+		while (i < n) {
+			let powersOfTwo[i] = powersOfTwo[i - 1] + powersOfTwo[i - 1];
+			let i = i + 1;
+		}
+		return;
+    }
+
+    /** Returns the product of x and y. 
+     *  When a Jack compiler detects the multiplication operator '*'
+     *  in an expression, it handles it by invoking this method. 
+     *  Thus, in Jack, x * y and Math.multiply(x,y) return the same value.
+     */
+    function int multiply(int x, int y) {
+		var int product, i;
+		let product = 0;
+		let i = 0;
+		while (i < n) {
+			if (~(y & powersOfTwo[i] = 0)) {
+				let product = product + x;
+			}
+			let i = i + 1;
+			let x = x + x;
+		}
+		return product;
+    }
+
+    /** Returns the integer part of x / y.
+     *  When a Jack compiler detects the division operator '/'
+     *  an an expression, it handles it by invoking this method.
+     *  Thus, x/y and Math.divide(x,y) return the same value.
+     */
+    function int divide(int x, int y) {
+		var boolean negative;
+		var int quotient, i;
+		var Array multiples;
+		if (y = 0) { do Sys.error(0); }
+		let negative = ((x > 0) & (y < 0)) | ((x < 0) & (y > 0));
+		let x = Math.abs(x);
+		let y = Math.abs(y);
+		let multiples = Array.new(n);
+		let multiples[0] = y;
+		let i = 0;
+		let multiples[1] = y + y;
+		while ((multiples[i + 1] > 0) & ~(multiples[i + 1] > x)) {
+			let i = i + 1;
+			let multiples[i + 1] = multiples[i] + multiples[i];
+		}
+		let quotient = 0;
+		while (~(i < 0)) {
+			if (~(x < multiples[i])) {
+				let quotient = quotient + powersOfTwo[i];
+				let x = x - multiples[i];
+			}
+			let i = i - 1;
+		}
+		if (negative) { let quotient = -quotient; }
+		do multiples.dispose();
+		return quotient;
+    }
+
+    /** Returns the integer part of the square root of x.
+    */
+    function int sqrt(int x) {
+		var int root, square, i;
+		if (x < 0) { do Sys.error(1); }
+		let root = 0;
+		let i = n / 2 - 1;
+		while (~(i < 0)) {
+			let square = (root + powersOfTwo[i]) * (root + powersOfTwo[i]);
+			if (~(square > x) & (square > 0)) { let root = root + powersOfTwo[i]; }
+			let i = i - 1;
+		}
+		return root;
+    }
+
+    /** Returns the greater value.
+    */
+    function int max(int a, int b) {
+		if (a > b) { return a; }
+		return b;
+    }
+
+    /** Returns the smaller value.
+    */
+    function int min(int a, int b) {
+		if (a < b) { return a; }
+		return b;
+    }
+
+    /** Returns the absolute value of x
+    */
+    function int abs(int x) {
+		if (x < 0) { let x = -x; }
+		return x;
+    }
+}
